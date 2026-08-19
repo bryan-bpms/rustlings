@@ -8,6 +8,8 @@
 use std::num::ParseIntError;
 use std::str::FromStr;
 
+use crate::ParsePersonError::{BadLen, NoName};
+
 #[derive(Debug, PartialEq)]
 struct Person {
     name: String,
@@ -41,7 +43,28 @@ enum ParsePersonError {
 impl FromStr for Person {
     type Err = ParsePersonError;
 
-    fn from_str(s: &str) -> Result<Self, Self::Err> {}
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        // 1. Get components using let-else
+        let mut split = s.split(",");
+        // 2. Check length
+        let (Some(name), Some(age), None) = (split.next(), split.next(), split.next()) else {
+            return Err(BadLen)
+        };
+        // 3. Check empty name
+        if name.is_empty() {
+            return Err(NoName)
+        }
+
+        // 4. Check age parsing and return person if all is good
+        match age.parse() {
+            Ok(age_parsed) => {
+                Ok(Person { name: name.to_string(), age: age_parsed })
+            }
+            Err(err) => {
+                Err(ParsePersonError::ParseInt(err))
+            }
+        }
+    }
 }
 
 fn main() {

@@ -5,7 +5,7 @@
 // https://doc.rust-lang.org/std/convert/trait.TryFrom.html
 
 #![allow(clippy::useless_vec)]
-use std::convert::{TryFrom, TryInto};
+use std::{convert::{TryFrom, TryInto}};
 
 #[derive(Debug, PartialEq)]
 struct Color {
@@ -28,14 +28,28 @@ enum IntoColorError {
 impl TryFrom<(i16, i16, i16)> for Color {
     type Error = IntoColorError;
 
-    fn try_from(tuple: (i16, i16, i16)) -> Result<Self, Self::Error> {}
+    fn try_from(tuple: (i16, i16, i16)) -> Result<Self, Self::Error> {
+        // Use let-else to attempt to convert the i16's to u8s
+        let (Ok(r), Ok(g), Ok(b)) = (u8::try_from(tuple.0), u8::try_from(tuple.1), u8::try_from(tuple.2)) else {
+            return Err(IntoColorError::IntConversion)
+        };
+        // Return the tuple
+        Ok(Color { red: r, green: g, blue: b })
+    }
 }
 
 // TODO: Array implementation.
 impl TryFrom<[i16; 3]> for Color {
     type Error = IntoColorError;
 
-    fn try_from(arr: [i16; 3]) -> Result<Self, Self::Error> {}
+    fn try_from(arr: [i16; 3]) -> Result<Self, Self::Error> {
+        // Use let-else to attempt to convert the i16's to u8s
+        let (Ok(r), Ok(g), Ok(b)) = (u8::try_from(arr[0]), u8::try_from(arr[1]), u8::try_from(arr[2])) else {
+            return Err(IntoColorError::IntConversion)
+        };
+        // Return the tuple
+        Ok(Color { red: r, green: g, blue: b })
+    }
 }
 
 // TODO: Slice implementation.
@@ -43,7 +57,21 @@ impl TryFrom<[i16; 3]> for Color {
 impl TryFrom<&[i16]> for Color {
     type Error = IntoColorError;
 
-    fn try_from(slice: &[i16]) -> Result<Self, Self::Error> {}
+    fn try_from(slice: &[i16]) -> Result<Self, Self::Error> {
+        // Get iterator from slice
+        let mut iter = slice.iter();
+        // Get slice components and check slice length
+        let (Some(r16), Some(g16), Some(b16), None) = (iter.next(), iter.next(), iter.next(), iter.next()) else {
+            return Err(IntoColorError::BadLen);
+        };
+
+        // Use let-else to attempt to convert the i16's to u8s
+        let (Ok(r), Ok(g), Ok(b)) = (u8::try_from(*r16), u8::try_from(*g16), u8::try_from(*b16)) else {
+            return Err(IntoColorError::IntConversion)
+        };
+        // Return the tuple
+        Ok(Color { red: r, green: g, blue: b })
+    }
 }
 
 fn main() {
